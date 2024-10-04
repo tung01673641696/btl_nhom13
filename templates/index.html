@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự đoán khả năng hoàn trả tín dụng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: maroon;        }
+        .container {
+            width: 30%;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: rgb(255, 255, 255);
+            border-radius: 8px;
+            box-shadow: 5px 5px 30px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        input[type="text"], input[type="radio"] {
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        #result{
+          margin: 20px 0;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .check {
+          display: flex;
+        }
+
+        button {
+            padding: 3px 10px;
+            margin: 10px 0;
+            display: block;
+            color: white;
+            background-color: rgb(243, 66, 66);
+            border: none;
+        }
+
+        button:hover {
+            background-color: white;
+            color: rgb(243, 66, 66);
+            border: 1px solid rgb(243, 66, 66);
+        }
+
+        #compare-result h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .common {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .title {
+            margin-bottom: 50px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="title">Dự đoán khả năng hoàn trả tín dụng</h2>
+
+        <label for="student" class="common">Cá Nhân Có Phải Sinh viên Không ?</label>
+        <div class="check">
+          <input type="radio" id="no" name="student" value="0" checked>
+          <label for="no">No</label>
+        </div>
+        <div class="check">
+          <input type="radio" id="yes" name="student" value="1">
+          <label for="yes">Yes</label>
+        </div>
+
+        <label for="balance" class="common">Số dư tài khoản:</label>
+        <input type="text" id="balance" name="balance" placeholder="Nhập số dư tài khoản">
+
+        <label for="income" class="common">Thu nhập của cá nhân:</label>
+        <input type="text" id="income" name="income" placeholder="Nhập thu nhập của cá nhân">
+
+        <button onclick="compareMeasurements()">So sánh các độ đo của từng Mô Hình</button>
+        <button onclick="predict()">Dự đoán</button>
+        <button onclick="compareModels()">So sánh mô hình</button>
+
+        <div id="compare_measurements"></div>
+        <div id="result"></div>
+        <div id="compare-result"></div>
+    </div>
+
+    <script>
+        function compareMeasurements() {
+          fetch('/compare_measurements', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultDiv = document.getElementById("compare_measurements");
+                resultDiv.innerHTML = `
+                    <h2>Các độ đo của từng mô hình</h2>
+                    <h3>Hồi quy Logistic</h3>
+                    <p>Accuracy: ${data.logistic.accuracy.toFixed(4)}</p>
+                    <p>Precision: ${data.logistic.precision.toFixed(4)}</p>
+                    <p>Recall: ${data.logistic.recall.toFixed(4)}</p>
+                    <p>F1-score: ${data.logistic.f1_score.toFixed(4)}</p>
+
+                    <h3>K-Nearest Neighbors (KNN)</h3>
+                    <p>Accuracy: ${data.knn.accuracy.toFixed(4)}</p>
+                    <p>Precision: ${data.knn.precision.toFixed(4)}</p>
+                    <p>Recall: ${data.knn.recall.toFixed(4)}</p>
+                    <p>F1-score: ${data.knn.f1_score.toFixed(4)}</p>
+
+                    <h3>Support Vector Machine (SVM)</h3>
+                    <p>Accuracy: ${data.svm.accuracy.toFixed(4)}</p>
+                    <p>Precision: ${data.svm.precision.toFixed(4)}</p>
+                    <p>Recall: ${data.svm.recall.toFixed(4)}</p>
+                    <p>F1-score: ${data.svm.f1_score.toFixed(4)}</p>
+                `;
+            });
+        }
+
+        function predict() {
+            const student = document.querySelector('input[name="student"]:checked').value;
+            const balance = document.getElementById("balance").value;
+            const income = document.getElementById("income").value;
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student: student,
+                    balance: balance,
+                    income: income
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").innerText = 
+                `Kết Quả Dự Đoán: ${data.prediction}`;
+            });
+        }
+
+
+
+        function compareModels() {
+            fetch('/compare')
+            .then(response => response.json())
+            .then(data => {
+                let resultss = document.getElementById("compare-result");
+                resultss.innerHTML = 
+                    `<h3> So sánh các mô hình </h3> 
+                    <p>Hồi quy logistic: ${data.log_accuracy.toFixed(4)}</p>
+                    <p>KNN: ${data.knn_accuracy.toFixed(4)} </p>
+                    <p>SVM: ${data.svm_accuracy.toFixed(4)}</p>`
+                    ;
+            });
+        }
+    </script>
+</body>
+</html>
