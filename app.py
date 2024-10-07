@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import numpy as np
 from sklearn.model_selection import GridSearchCV
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 app = Flask(__name__)
 
@@ -25,7 +27,6 @@ scaler.fit(X_train)
 X_train = pd.DataFrame(scaler.transform(X_train), columns=X.columns)
 X_test = pd.DataFrame(scaler.transform(X_test), columns=X.columns)
     
-
 log_model = LogisticRegression(solver='lbfgs')
 knn_model = KNeighborsClassifier()
 svm_model = SVC()
@@ -37,7 +38,6 @@ svm_model.fit(X_train, y_train)
 def predict_default(model, features):
     probability = model.predict_proba(features)[:, 1] if hasattr(model, 'predict_proba') else model.decision_function(features)
     return probability[0]
-
 
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
@@ -107,6 +107,16 @@ def compare():
         'knn_accuracy': accuracy_knn,
         'svm_accuracy': accuracy_svm,
     })
+
+models = ['Logistic Regression', 'KNN', 'SVM']
+accuracies = [log_model.score(X_test, y_test), knn_model.score(X_test, y_test), svm_model.score(X_test, y_test)]
+
+plt.bar(models, accuracies, color=['blue', 'green', 'orange'])
+plt.xlabel('Models')
+plt.ylabel('Accuracy')
+plt.title('So sánh các mô hình')
+plt.ylim([0, 1])
+plt.show()
 
 if __name__ == '__main__':
     app.run(debug=True)
