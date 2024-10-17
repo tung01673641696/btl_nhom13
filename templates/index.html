@@ -165,7 +165,7 @@
             .then(data => {
                 let resultss = document.getElementById("compare-result");
                 resultss.innerHTML = 
-                    `<h3> So sánh các mô hình </h3> 
+                    `<h3> So sánh độ chính xác Accuracy của 3 mô hình </h3> 
                     <p>Hồi quy logistic: ${data.log_accuracy.toFixed(4)}</p>
                     <p>KNN: ${data.knn_accuracy.toFixed(4)} </p>
                     <p>SVM: ${data.svm_accuracy.toFixed(4)}</p>`

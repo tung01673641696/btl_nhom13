@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -7,16 +8,21 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import numpy as np
-from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from sklearn.model_selection import GridSearchCV
 
 app = Flask(__name__)
 
 df = pd.read_csv('attachment_default.csv')
 
+checkNull= df.isnull().sum()
+
 df['student'] = df['student'].map({'No': 0, 'Yes': 1})
 df['default'] = df['default'].map({'No': 0, 'Yes': 1})
+
+df.dtypes
+
 X = df.drop('default', axis=1)
 y = df['default']
 
@@ -26,10 +32,17 @@ scaler = MinMaxScaler()
 scaler.fit(X_train)
 X_train = pd.DataFrame(scaler.transform(X_train), columns=X.columns)
 X_test = pd.DataFrame(scaler.transform(X_test), columns=X.columns)
-    
+
 log_model = LogisticRegression(solver='lbfgs')
 knn_model = KNeighborsClassifier()
 svm_model = SVC()
+
+param_grid = {'C': [0.1, 1, 10, 100]}
+log_model = GridSearchCV(estimator=log_model, param_grid=param_grid, cv=5)
+log_model.fit(X_train, y_train)
+
+print("Best parameters: ", log_model.best_params_)
+print("Best score: ", log_model.best_score_)
 
 log_model.fit(X_train, y_train)
 knn_model.fit(X_train, y_train)
@@ -79,6 +92,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
+
 def predict():
     data = request.get_json()
     student = int(data['student'])
@@ -108,15 +122,15 @@ def compare():
         'svm_accuracy': accuracy_svm,
     })
 
-models = ['Logistic Regression', 'KNN', 'SVM']
-accuracies = [log_model.score(X_test, y_test), knn_model.score(X_test, y_test), svm_model.score(X_test, y_test)]
+# models = ['Logistic Regression', 'KNN', 'SVM']
+# accuracies = [log_model.score(X_test, y_test), knn_model.score(X_test, y_test), svm_model.score(X_test, y_test)]
 
-plt.bar(models, accuracies, color=['blue', 'green', 'orange'])
-plt.xlabel('Models')
-plt.ylabel('Accuracy')
-plt.title('So sánh các mô hình')
-plt.ylim([0, 1])
-plt.show()
+# plt.bar(models, accuracies, color=['blue', 'green', 'orange'])
+# plt.xlabel('Models')
+# plt.ylabel('Accuracy')
+# plt.title('So sánh các mô hình')
+# plt.ylim([0, 1])
+# plt.show()
 
 if __name__ == '__main__':
     app.run(debug=True)
